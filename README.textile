@@ -1,0 +1,27 @@
+h1. What is it?
+
+Etoffe is a Scala implementation of a lightweight markup language with a syntax similar to "textile":http://textile.thresholdstate.com/.
+
+h1. Syntax
+
+h2. Inline content
+
+@_emphasis_@ => _emphasis_
+
+@*strong emphasis*@ => *strong emphasis*
+
+@`code`@ => @code@
+
+@"Link name":http://your-url.com@ => "Link name":http://your-url.com
+
+@text [[footnote]]@ => text ^["1":/footnote#1]^
+
+h2. Blocks
+
+@# Section@
+
+Paragraphs are separated by 2 line breaks.
+
+bc. - list item
+  - second level item
+
