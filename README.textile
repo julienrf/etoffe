@@ -14,14 +14,14 @@ h2. Inline content
 
 @"Link name":http://your-url.com@ => "Link name":http://your-url.com
 
-@text [[footnote]]@ => text ^["1":/footnote#1]^
+@text [footnote]@ => text ^["1":/footnote#1]^
 
 h2. Blocks
 
 @# Section@
 
-Paragraphs are separated by 2 line breaks.
+Paragraphs are separated by line breaks.
 
 bc. - list item
-  - second level item
+- second item
 

@@ -1,7 +1,7 @@
 package etoffe
 
 
-case class Document(paragraphs: List[Block])
+case class Document(blocks: List[Block])
 
 object Document {
   val empty = Document(List.empty)

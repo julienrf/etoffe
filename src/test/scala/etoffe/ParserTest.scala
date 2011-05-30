@@ -13,7 +13,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
     Etoffe.parse("word") should be (Document(List(Paragraph(List(Text("word"))))))
   }
   
-  test ("Two blank lines separate paragraphs") {
+  test ("New lines separate paragraphs") {
     Etoffe.parse("""|line1
                     |
                     |line2""".stripMargin) should be (Document(List(Paragraph(List(Text("line1"))),
@@ -24,7 +24,8 @@ class ParserTest extends FunSuite with ShouldMatchers {
                     |line2""".stripMargin) should be (Document(List(Paragraph(List(Text("line1"))),
                                                                     Paragraph(List(Text("line2"))))))
     Etoffe.parse("""|line1
-                    |line2""".stripMargin) should be (Document(List(Paragraph(List(Text("line1"), Text("line2"))))))
+                    |line2""".stripMargin) should be (Document(List(Paragraph(List(Text("line1"))),
+                                                                    Paragraph(List(Text("line2"))))))
   }
   
   test ("Section") {
@@ -36,7 +37,10 @@ class ParserTest extends FunSuite with ShouldMatchers {
                     |bar""".stripMargin) should be (Document(List(Section("foo"), Paragraph(List(Text("bar"))))))
   }
   
-  test ("Bullets") (pending)
+  test ("Bullets") {
+    Etoffe.parse("""| - foo
+                    | - bar""".stripMargin) should be (Document(List(BulletItem(Paragraph(List(Text("foo")))), BulletItem(Paragraph(List(Text("bar")))))))
+  }
   
   test ("Text surrounded by stars is strongly emphasized") {
     Etoffe.parse("*foo*") should be (Document(List(Paragraph(List(Strong("foo"))))))
@@ -74,6 +78,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
     Etoffe.parse(""""foo":/bar""") should be (Document(List(Paragraph(List(Link("foo", "/bar"))))))
     Etoffe.parse(""""foo":/bar#baz""") should be (Document(List(Paragraph(List(Link("foo", "/bar#baz"))))))
     Etoffe.parse(""""google":http://google.com""") should be (Document(List(Paragraph(List(Link("google", "http://google.com"))))))
+    Etoffe.parse(""""google link":http://google.com""") should be (Document(List(Paragraph(List(Link("google link", "http://google.com"))))))
     // TODO url encoding
   }
   
@@ -81,4 +86,6 @@ class ParserTest extends FunSuite with ShouldMatchers {
     Etoffe.parse("http://foo.com") should be (Document(List(Paragraph(List(Link("http://foo.com", "http://foo.com"))))))
     Etoffe.parse("http://foo.com/bar#baz") should be (Document(List(Paragraph(List(Link("http://foo.com/bar#baz", "http://foo.com/bar#baz"))))))
   }*/
+  
+  test ("Footnotes") (pending)
 }
