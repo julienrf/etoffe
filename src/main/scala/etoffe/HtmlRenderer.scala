@@ -1,76 +1,107 @@
 package etoffe
 
+import collection.mutable.{Buffer, ListBuffer}
+import index.{Generator, NumberGenerator}
+
 trait HtmlRenderer {
-  def render(document: Document): String = {
-    val blocks = collection.mutable.ListBuffer.empty[String]
-    val footnotes = collection.mutable.ListBuffer.empty[String]
-    
-    def escapeAndAppend(content: String, buffer: StringBuilder) {
-      for (char <- content) {
-        char match {
-          case '<' => buffer.append("&lt;")
-          case '>' => buffer.append("&gt;")
-          case '&' => buffer.append("&amp;")
-          case '"' => buffer.append("&quot;")
-          case c => buffer.append(c)
-        }
-      }
-    }
-    
-    def wrapAndAppend(content: String, tag: String, buffer: StringBuilder) {
-      // FIXME is it _really_ faster than string concatenation?
-      buffer.append("<")
-      buffer.append(tag)
-      buffer.append(">")
-      escapeAndAppend(content, buffer)
-      buffer.append("</")
-      buffer.append(tag)
-      buffer.append(">")
-    }
+  
+  def render(document: Document, indexGen: Generator = new NumberGenerator): String = {
+    val blocks = ListBuffer.empty[String]
+    val footnotes = ListBuffer.empty[String]
     
     val itBlock = document.blocks.iterator
     while (itBlock.hasNext) {
       val buffer = new StringBuilder
       itBlock.next match {
         case Section(title) => {
-          buffer.append("<h2>")
+          buffer ++= "<h2>"
           escapeAndAppend(title, buffer)
-          buffer.append("</h2>")
+          buffer ++= "</h2>"
         }
-        case Paragraph(inlines) => {
-          buffer.append("<p>")
-          val itInline = inlines.iterator
-          while (itInline.hasNext) {
-            itInline.next match {
-              case Text(word) => escapeAndAppend(word, buffer)
-              case Emphasized(content) => wrapAndAppend(content, "em", buffer)
-              case Strong(content) => wrapAndAppend(content, "strong", buffer)
-              case Code(content) => wrapAndAppend(content, "code", buffer)
-              case Link(title, url) => {
-                buffer.append("<a href=\"")
-                escapeAndAppend(url, buffer) // FIXME urlencode?
-                buffer.append("\" title=\"")
-                escapeAndAppend(title, buffer)
-                buffer.append("\">")
-                escapeAndAppend(title, buffer)
-                buffer.append("</a>")
-              }
-            }
-            if (itInline.hasNext) {
-              buffer.append(" ")
-            }
-          }
-          buffer.append("</p>")
+        case Bullet(paragraph) => {
+          buffer ++= "<ul><li>"
+          appendParagraph(paragraph, buffer, footnotes, indexGen)
+          buffer ++= "</li></ul>"
+        }
+        case p: Paragraph => {
+          buffer ++= "<p>"
+          appendParagraph(p, buffer, footnotes, indexGen)
+          buffer ++= "</p>"
         }
       }
       if (itBlock.hasNext) {
-        buffer.append("\n")
+        buffer ++= "\n"
       }
       blocks += buffer.toString
     }
     
     blocks.mkString + footnotes.mkString
   }
+  
+  private def escapeAndAppend(content: String, buffer: StringBuilder) {
+    for (char <- content) {
+      char match {
+        case '<' => buffer ++= "&lt;"
+        case '>' => buffer ++= "&gt;"
+        case '&' => buffer ++= "&amp;"
+        case '"' => buffer ++= "&quot;"
+        case c => buffer += c
+      }
+    }
+  }
+  
+  private def wrapAndAppend(content: String, tag: String, buffer: StringBuilder) {
+    // FIXME is it _really_ faster than string concatenation?
+    buffer += '<'
+    buffer ++= tag
+    buffer += '>'
+    escapeAndAppend(content, buffer)
+    buffer ++= "</"
+    buffer ++= tag
+    buffer += '>'
+  }
+  
+  private def appendParagraph(paragraph: Paragraph, buffer: StringBuilder, footnotes: Buffer[String], indexGen: Generator) {
+    val itInline = paragraph.content.iterator
+    while (itInline.hasNext) {
+      itInline.next match {
+        case Text(word) => escapeAndAppend(word, buffer)
+        case Emphasized(content) => wrapAndAppend(content, "em", buffer)
+        case Strong(content) => wrapAndAppend(content, "strong", buffer)
+        case Code(content) => wrapAndAppend(content, "code", buffer)
+        case Link(title, url) => {
+          buffer ++= "<a href=\""
+          escapeAndAppend(url, buffer) // FIXME urlencode?
+          buffer ++= "\" title=\""
+          escapeAndAppend(title, buffer)
+          buffer ++= "\">"
+          escapeAndAppend(title, buffer)
+          buffer ++= "</a>"
+        }
+        case Footnote(content) => {
+          val index = indexGen.next()
+          buffer ++= "<sup>[<a href=\"#footnote_"
+          buffer ++= index
+          buffer ++= "\">"
+          buffer ++= index
+          buffer ++= "</a>]</sup>"
+          val footnote = new StringBuilder
+          footnote ++= "<p id=\"footnote_"
+          footnote ++= index
+          footnote ++= "\">["
+          footnote ++= index
+          footnote ++= "] "
+          footnote ++= content
+          footnote ++= "</p>"
+          footnotes += footnote.toString
+        }
+      }
+      if (itInline.hasNext) {
+        buffer.append(" ")
+      }
+    }
+  }
+  
 }
 
 object HtmlRenderer extends HtmlRenderer

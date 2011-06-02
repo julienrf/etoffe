@@ -22,4 +22,10 @@ class HtmlRendererTest extends FunSuite with ShouldMatchers {
   test ("Html escape") {
     Etoffe.render("<hr />") should be ("<p>&lt;hr /&gt;</p>")
   }
+  
+  test ("Footnotes") {
+    Etoffe.render("See [Programming in Scala, M. Odersky]") should be
+      ("""|<p>See <sup>[<a href="#footnote_1">1</a>]</sup></p>
+          |<p id="footnote_1">[1] Programming in Scala, M. Odersky</p>""")
+  }
 }

@@ -39,7 +39,7 @@ class ParserTest extends FunSuite with ShouldMatchers {
   
   test ("Bullets") {
     Etoffe.parse("""| - foo
-                    | - bar""".stripMargin) should be (Document(List(BulletItem(Paragraph(List(Text("foo")))), BulletItem(Paragraph(List(Text("bar")))))))
+                    | - bar""".stripMargin) should be (Document(List(Bullet(Paragraph(List(Text("foo")))), Bullet(Paragraph(List(Text("bar")))))))
   }
   
   test ("Text surrounded by stars is strongly emphasized") {
@@ -87,5 +87,12 @@ class ParserTest extends FunSuite with ShouldMatchers {
     Etoffe.parse("http://foo.com/bar#baz") should be (Document(List(Paragraph(List(Link("http://foo.com/bar#baz", "http://foo.com/bar#baz"))))))
   }*/
   
-  test ("Footnotes") (pending)
+  test ("Footnotes") {
+    Etoffe.parse("foo [footnote] bar") should be (Document(List(Paragraph(List(Text("foo"), Footnote("footnote"), Text("bar"))))))
+    Etoffe.parse("foo [one two]") should be (Document(List(Paragraph(List(Text("foo"), Footnote("one two"))))))
+  }
+  
+  test ("Non ASCII characters") {
+    Etoffe.parse("ç«»ué") should be (Document(List(Paragraph(List(Text("ç«»ué"))))))
+  }
 }

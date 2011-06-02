@@ -1,6 +1,7 @@
 package etoffe
 
 import util.parsing.combinator.RegexParsers
+import util.matching.Regex
 
 trait Parser extends RegexParsers {
   
@@ -11,7 +12,7 @@ trait Parser extends RegexParsers {
   
   def section: Parser[Section] = "# " ~> ".+".r ^^ { s => Section(s) }
   
-  def bullets: Parser[BulletItem] = " *- ".r ~> paragraph ^^ { p => BulletItem(p) }
+  def bullets: Parser[Bullet] = " *- ".r ~> paragraph ^^ { p => Bullet(p) }
   
   def paragraph: Parser[Paragraph] = (((spaces ~> inline) +) <~ (newline | EOI)) ^^ { inlines => Paragraph(inlines) }
   
@@ -32,9 +33,11 @@ trait Parser extends RegexParsers {
   def link: Parser[Link] = LinkPattern ^^ { case LinkPattern(title, url, _) => Link(title, url) }
   val LinkPattern = """"(\S.*?)":(\S+?)(\s|\z)""".r
   
-  def footnote: Parser[FootnoteRef] = failure("TODO")
+  def footnote: Parser[Footnote] = FootnotePattern ^^ { case FootnotePattern(content, _) => Footnote(content) }
+  val FootnotePattern = inlinePattern("\\[", "\\]")
   
-  def inlinePattern(delim: String) = (delim + """(\S.+?)""" + delim + """(\s|\z)""").r
+  def inlinePattern(delim: String): Regex = inlinePattern(delim, delim)
+  def inlinePattern(start: String, stop: String) = (start + """(\S.+?)""" + stop + """(\s|\z)""").r
   val spaces = """[ \t]*""".r
   val newline = """\r?\n""".r
   val newlines = """(\r?\n)*""".r
