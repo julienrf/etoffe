@@ -1,11 +1,10 @@
 package etoffe
 
 import collection.mutable.{Buffer, ListBuffer}
-import index.{Generator, NumberGenerator}
 
 trait HtmlRenderer {
   
-  def render(document: Document, indexGen: Generator = new NumberGenerator): String = {
+  def render(document: Document, indexGen: IndexGenerator = new NumberGenerator): (Traversable[String], Traversable[String]) = {
     val blocks = ListBuffer.empty[String]
     val footnotes = ListBuffer.empty[String]
     
@@ -35,7 +34,7 @@ trait HtmlRenderer {
       blocks += buffer.toString
     }
     
-    blocks.mkString + footnotes.mkString
+    (blocks, footnotes)
   }
   
   private def escapeAndAppend(content: String, buffer: StringBuilder) {
@@ -61,7 +60,7 @@ trait HtmlRenderer {
     buffer += '>'
   }
   
-  private def appendParagraph(paragraph: Paragraph, buffer: StringBuilder, footnotes: Buffer[String], indexGen: Generator) {
+  private def appendParagraph(paragraph: Paragraph, buffer: StringBuilder, footnotes: Buffer[String], indexGen: IndexGenerator) {
     val itInline = paragraph.content.iterator
     while (itInline.hasNext) {
       itInline.next match {
@@ -85,15 +84,15 @@ trait HtmlRenderer {
           buffer ++= "\">"
           buffer ++= index
           buffer ++= "</a>]</sup>"
-          val footnote = new StringBuilder
-          footnote ++= "<p id=\"footnote_"
-          footnote ++= index
-          footnote ++= "\">["
-          footnote ++= index
-          footnote ++= "] "
-          footnote ++= content
-          footnote ++= "</p>"
-          footnotes += footnote.toString
+          val footnoteStr = new StringBuilder
+          footnoteStr ++= "<p id=\"footnote_"
+          footnoteStr ++= index
+          footnoteStr ++= "\">["
+          footnoteStr ++= index
+          footnoteStr ++= "] "
+          escapeAndAppend(content, footnoteStr)
+          footnoteStr ++= "</p>"
+          footnotes += footnoteStr.toString
         }
       }
       if (itInline.hasNext) {
