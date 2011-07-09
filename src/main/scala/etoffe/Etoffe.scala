@@ -3,12 +3,23 @@ package etoffe
 trait Etoffe {
   /**
    * @param text Text to compile
-   * @return Html paragraphs corresponding to source text, and the footnotes
+   * @param indexGen Strategy to generate footnotes ids
+   * @return AST of the compiled text
    */
   def parse(text: String, indexGen: IndexGenerator): Document
   
+  /**
+   * @param text Text to render
+   * @param indexGen Strategy to generate footnotes ids
+   * @return HTML code of the whole text, including footnotes
+   */
   def render(text: String, indexGen: IndexGenerator): String
   
+  /**
+   * @param text Text to render
+   * @param indexGen Strategy to generate footnotes ids
+   * @return (paragraphs, footnotes): The list of HTML paragraphs and footnotes
+   */
   def renderParagraphs(text: String, indexGen: IndexGenerator): (Traversable[String], Traversable[String])
 }
 
