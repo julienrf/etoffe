@@ -6,7 +6,7 @@ trait Etoffe {
    * @param indexGen Strategy to generate footnotes ids
    * @return AST of the compiled text
    */
-  def parse(text: String, indexGen: IndexGenerator): Document
+  def parse(text: String): Document
   
   /**
    * @param text Text to render
@@ -25,7 +25,7 @@ trait Etoffe {
 
 object Etoffe extends Etoffe {
   
-  override def parse(text: String, indexGen: IndexGenerator = new NumberGenerator): Document =
+  override def parse(text: String): Document =
     Parser.parse(text)
   
   override def render(text: String, indexGen: IndexGenerator = new NumberGenerator): String = {
