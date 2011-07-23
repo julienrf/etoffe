@@ -79,17 +79,15 @@ trait HtmlRenderer {
         }
         case Footnote(content) => {
           val index = indexGen.next()
-          buffer ++= "<sup>[<a href=\"#footnote_"
+          buffer ++= "<sup><a href=\"#footnote_"
           buffer ++= index
           buffer ++= "\">"
           buffer ++= index
-          buffer ++= "</a>]</sup>"
+          buffer ++= "</a></sup>"
           val footnoteStr = new StringBuilder
           footnoteStr ++= "<p id=\"footnote_"
           footnoteStr ++= index
-          footnoteStr ++= "\">["
-          footnoteStr ++= index
-          footnoteStr ++= "] "
+          footnoteStr ++= "\">"
           escapeAndAppend(content, footnoteStr)
           footnoteStr ++= "</p>"
           footnotes += footnoteStr.toString
