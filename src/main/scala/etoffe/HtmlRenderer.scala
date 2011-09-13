@@ -62,8 +62,8 @@ trait HtmlRenderer {
   
   private def appendParagraph(paragraph: Paragraph, buffer: StringBuilder, footnotes: Buffer[String], indexGen: IndexGenerator) {
     val itInline = paragraph.content.iterator
-    while (itInline.hasNext) {
-      itInline.next match {
+    for (inline <- paragraph.content) {
+      inline match {
         case Text(word) => escapeAndAppend(word, buffer)
         case Emphasized(content) => wrapAndAppend(content, "em", buffer)
         case Strong(content) => wrapAndAppend(content, "strong", buffer)
@@ -92,9 +92,6 @@ trait HtmlRenderer {
           footnoteStr ++= "</p>"
           footnotes += footnoteStr.toString
         }
-      }
-      if (itInline.hasNext) {
-        buffer.append(" ")
       }
     }
   }

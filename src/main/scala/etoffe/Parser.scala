@@ -5,45 +5,53 @@ import util.matching.Regex
 
 trait Parser extends RegexParsers {
   
-  def document: Parser[Document] = rep(newlines ~> block) ^^ { blocks => Document(blocks) }
+  override val whiteSpace = "".r
   
+  // A word is just a sequence of letters or digitss
+  val word = """[\p{L}\p{Nd}]+""".r ^^ { w => Text(w) }
   
-  def block: Parser[Block] = section | bullets | paragraph
+  val spaces = """[ \t]+""".r ^^ { s => Text(" ") }
   
-  def section: Parser[Section] = "# " ~> ".+".r ^^ { s => Section(s) }
-  
-  def bullets: Parser[Bullet] = " *- ".r ~> paragraph ^^ { p => Bullet(p) }
-  
-  def paragraph: Parser[Paragraph] = (((spaces ~> inline) +) <~ (newline | EOI)) ^^ { inlines => Paragraph(inlines) }
-  
-  
-  def inline: Parser[Inline] = strong | emphasis | code | link | footnote | word
-  
-  def word: Parser[Text] = """\S+""".r ^^ { s => Text(s) }
-  
-  def strong: Parser[Strong] = StrongPattern ^^ { case StrongPattern(content, _) => Strong(content) }
-  val StrongPattern = inlinePattern(delim = """\*""")
-  
-  def emphasis: Parser[Emphasized] = EmPattern ^^ { case EmPattern(content, _) => Emphasized(content) }
-  val EmPattern = inlinePattern(delim = "_")
-  
-  def code: Parser[Code] = CodePattern ^^ { case CodePattern(content, _) => Code(content) }
-  val CodePattern = inlinePattern(delim ="`")
-  
-  def link: Parser[Link] = LinkPattern ^^ { case LinkPattern(title, url, _) => Link(title, url) }
-  val LinkPattern = """"(\S.*?)":(\S+?)(\s|\z)""".r
-  
-  def footnote: Parser[Footnote] = FootnotePattern ^^ { case FootnotePattern(content, _) => Footnote(content) }
-  val FootnotePattern = inlinePattern("\\[", "\\]")
-  
-  def inlinePattern(delim: String): Regex = inlinePattern(delim, delim)
-  def inlinePattern(start: String, stop: String) = (start + """(\S.+?)""" + stop + """(\s|\z)""").r
-  val spaces = """[ \t]*""".r
   val newline = """\r?\n""".r
-  val newlines = """(\r?\n)*""".r
+  val newlines = newline*
+
   val EOI = """\z""".r
   
-  override val whiteSpace = "".r
+  // Anything but a word, a space or a newline
+  val punct = """[^\p{L}\p{Nd} \t\r\n]""".r ^^ { p => Text(p) }
+  // Any punctuation mark but except
+  def punct(except: String): Parser[Text] = not(except) ~> punct
+  
+  // Consume content until the potential start of a markup or the end of the line
+  val text: Parser[Text] = ("""[^\r\n]""".r ~ (("""[^*_"`\[\r\n]""".r)*)) ^^ { case c ~ cs => Text(c + cs.mkString) }
+  // Word or punctuation mark. If the punctuation mark is sep, make sure it is followed by a word
+  val wordOrPunct: Parser[Text] = word | punct
+  def wordOrPunct(sep: String): Parser[Text] = (word | ((sep <~ guard(word)) ^^^ { Text(sep) }) | punct(sep))
+  // (spaces? (wordOrPunct))*
+  def spacesAndWordsOrPuncts(wordOrPunct: Parser[Text]) = ((((spaces?) ~ wordOrPunct) ^^ { case Some(s) ~ pw => Text(s.text + pw.text) ; case None ~ pw => pw })*) ^^ { ws => ws.foldLeft(Text(""))((w1, w2) => Text(w1.text + w2.text)) }
+  
+  def inline(start: String, stop: String): Parser[Text] = (start ~> (word ~ spacesAndWordsOrPuncts(wordOrPunct(stop))) <~ stop) ^^ { case w1 ~ w2 => Text(w1.text + w2.text) }
+  def inline(delim: String): Parser[Text] = inline(delim, delim)
+  
+  val strong: Parser[Strong] = inline("*") ^^ { t => Strong(t.text) }
+  val emphasis: Parser[Emphasized] = inline("_") ^^ { t => Emphasized(t.text) }
+  val code: Parser[Code] = inline("`") ^^ { t => Code(t.text) }
+  
+  val LinkPattern = """"(\S.*?)":(\S+[\w/])""".r
+  val link: Parser[Link] = LinkPattern ^^ { case LinkPattern(title, url) => Link(title, url) }
+  
+  val footnote: Parser[Footnote] = inline("[", "]") ^^ { t => Footnote(t.text) }
+  
+  // Inline content
+  val inline: Parser[Inline] = strong | emphasis | code | link | footnote | text
+  
+  val paragraph: Parser[Paragraph] = ((inline+) <~ (newline | EOI)) ^^ { inlines => Paragraph(inlines) }
+  val bullets: Parser[Bullet] = " *- ".r ~> paragraph ^^ { p => Bullet(p) }
+  val section: Parser[Section] = "# " ~> ".+".r ^^ { s => Section(s) }
+  
+  val block: Parser[Block] = section | bullets | paragraph
+  
+  val document: Parser[Document] = rep(newlines ~> block) ^^ { blocks => Document(blocks) }
 }
 
 object Parser extends Parser {

@@ -11,12 +11,12 @@ class HtmlRendererTest extends FunSuite with ShouldMatchers {
   test ("Basic text") {
     Etoffe.render("""|# A Section
                      |
-                     |Paragraph content with _emphasized_ and *strong* content.
+                     |Paragraph content with _emphasized_, *strong* and `code` content.
                      |
-                     |Another paragraph with a "link":http://google.fr""".stripMargin) should be
+                     |Another paragraph with a "link":http://google.fr.""".stripMargin) should be
     ("""|<h2>A Section</h2>
-        |<p>Paragraph content with <em>emphasized</em> and <strong>strong</strong> content.</p>
-        |<p>Another paragraph with a <a href="http://google.fr" title="link">link</a></p>""".stripMargin)
+        |<p>Paragraph content with <em>emphasized</em>, <strong>strong</strong> and <code>code</code> content.</p>
+        |<p>Another paragraph with a <a href="http://google.fr" title="link">link</a>.</p>""".stripMargin)
   }
   
   test ("Html escape") {
